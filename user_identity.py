@@ -30,10 +30,10 @@ def registrar():
     required_fields = ['nombre', 'apellidos', 'correo', 'contrasena']
     for field in required_fields:
         if field not in data:
-            return jsonify({"error": f"Falta el campo obligatorio: {field}"}), 400
+            return jsonify({"exito": False, "error": f"Falta el campo obligatorio: {field}"}), 400
 
     if Usuario.query.filter_by(correo=data['correo']).first():
-        return jsonify({"error": "Correo ya registrado"}), 400
+        return jsonify({"exito": False, "error": "Correo ya registrado"}), 400
 
     hashed_password = generate_password_hash(data['contrasena'])
 
@@ -50,7 +50,7 @@ def registrar():
     db.session.add(nuevo_usuario)
     db.session.commit()
 
-    return jsonify({"mensaje": "Usuario registrado correctamente", "rol": nuevo_usuario.rol})
+    return jsonify({"exito": True, "mensaje": "Usuario registrado correctamente", "rol": nuevo_usuario.rol})
 
 # Ruta para iniciar sesión
 @app.route('/login', methods=['POST'])
@@ -58,12 +58,13 @@ def login():
     data = request.get_json()
 
     if not data or 'correo' not in data or 'contrasena' not in data:
-        return jsonify({"error": "Correo y contraseña son requeridos"}), 400
+        return jsonify({"exito": False, "error": "Correo y contraseña son requeridos"}), 400
 
     usuario = Usuario.query.filter_by(correo=data['correo']).first()
 
     if usuario and check_password_hash(usuario.contrasena, data['contrasena']):
         return jsonify({
+            "exito": True,
             "mensaje": "Inicio de sesión exitoso",
             "usuario": {
                 "nombre": usuario.nombre,
@@ -73,7 +74,7 @@ def login():
             }
         })
     else:
-        return jsonify({"error": "Correo o contraseña incorrectos"}), 401
+        return jsonify({"exito": False, "error": "Correo o contraseña incorrectos"}), 401
 
 # Punto de entrada
 if __name__ == '__main__':
