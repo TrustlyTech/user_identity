@@ -82,6 +82,32 @@ def login():
     else:
         return jsonify({"exito": False, "error": "Correo o contraseña incorrectos"}), 401
 
+@app.route('/perfil', methods=['GET'])
+def obtener_perfil():
+    correo = request.args.get('correo')  # ?correo=ejemplo@email.com
+
+    if not correo:
+        return jsonify({"exito": False, "error": "Correo no proporcionado"}), 400
+
+    usuario = Usuario.query.filter_by(correo=correo).first()
+
+    if not usuario:
+        return jsonify({"exito": False, "error": "Usuario no encontrado"}), 404
+
+    return jsonify({
+        "exito": True,
+        "usuario": {
+            "nombre": usuario.nombre,
+            "apellidos": usuario.apellidos,
+            "correo": usuario.correo,
+            "ciudad": usuario.ciudad,
+            "pais": usuario.pais,
+            "celular": usuario.celular,
+            "rol": usuario.rol
+        }
+    }), 200
+
+
 # Punto de entrada
 if __name__ == '__main__':
     with app.app_context():
