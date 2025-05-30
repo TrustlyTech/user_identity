@@ -22,18 +22,23 @@ class Usuario(db.Model):
     celular = db.Column(db.String(20))
     rol = db.Column(db.String(20), default="usuario")
 
-# Ruta para registrar usuario
 @app.route('/registrar', methods=['POST'])
 def registrar():
     data = request.get_json()
 
     required_fields = ['nombre', 'apellidos', 'correo', 'contrasena']
     for field in required_fields:
-        if field not in data:
+        if field not in data or not data[field].strip():
             return jsonify({"exito": False, "error": f"Falta el campo obligatorio: {field}"}), 400
 
+    # Verificar si el correo ya está registrado
     if Usuario.query.filter_by(correo=data['correo']).first():
-        return jsonify({"exito": False, "error": "Correo ya registrado"}), 400
+        return jsonify({"exito": False, "error": "Correo ya registrado"}), 409
+
+    # Verificar si el celular ya está registrado (si es proporcionado)
+    celular = data.get('celular')
+    if celular and Usuario.query.filter_by(celular=celular).first():
+        return jsonify({"exito": False, "error": "Celular ya registrado"}), 409
 
     hashed_password = generate_password_hash(data['contrasena'])
 
@@ -44,13 +49,14 @@ def registrar():
         contrasena=hashed_password,
         ciudad=data.get('ciudad'),
         pais=data.get('pais'),
-        celular=data.get('celular')
+        celular=celular
     )
 
     db.session.add(nuevo_usuario)
     db.session.commit()
 
-    return jsonify({"exito": True, "mensaje": "Usuario registrado correctamente", "rol": nuevo_usuario.rol})
+    return jsonify({"exito": True, "mensaje": "Usuario registrado correctamente", "rol": nuevo_usuario.rol}), 200
+
 
 # Ruta para iniciar sesión
 @app.route('/login', methods=['POST'])
