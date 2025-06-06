@@ -84,10 +84,13 @@ def login():
     else:
         return jsonify({"exito": False, "error": "Correo o contraseña incorrectos"}), 401
 
-# Crear tablas si no existen al iniciar la app
-@app.before_first_request
-def crear_tablas_si_no_existen():
-    db.create_all()
 
-if __name__ == '__main__':
+if __name__ != '__main__':
+    # Producción (Gunicorn en Render, etc.)
+    with app.app_context():
+        db.create_all()
+else:
+    # Desarrollo local
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
