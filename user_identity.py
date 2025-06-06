@@ -4,8 +4,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-# Configura la conexión a MySQL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:eenAqGzMWjTrMzFNiokxpZnxIOCzvTch@hopper.proxy.rlwy.net:32343/railway'
+# Configura la conexión a PostgreSQL
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://requisitoriados_user:x0xLGMH3N71ZfUG9UX7rcBiujKiELzKY@dpg-d114ho2li9vc738covqg-a.oregon-postgres.render.com/requisitoriados'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -31,11 +31,9 @@ def registrar():
         if field not in data or not data[field].strip():
             return jsonify({"exito": False, "error": f"Falta el campo obligatorio: {field}"}), 400
 
-    # Verificar si el correo ya está registrado
     if Usuario.query.filter_by(correo=data['correo']).first():
         return jsonify({"exito": False, "error": "Correo ya registrado"}), 409
 
-    # Verificar si el celular ya está registrado (si es proporcionado)
     celular = data.get('celular')
     if celular and Usuario.query.filter_by(celular=celular).first():
         return jsonify({"exito": False, "error": "Celular ya registrado"}), 409
@@ -56,7 +54,6 @@ def registrar():
     db.session.commit()
 
     return jsonify({"exito": True, "mensaje": "Usuario registrado correctamente", "rol": nuevo_usuario.rol}), 200
-
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -83,8 +80,6 @@ def login():
         })
     else:
         return jsonify({"exito": False, "error": "Correo o contraseña incorrectos"}), 401
-        
-
 
 # Punto de entrada
 if __name__ == '__main__':
