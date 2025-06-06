@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+CORS(app)
 
 # Configura la conexión a PostgreSQL
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://requisitoriados_user:x0xLGMH3N71ZfUG9UX7rcBiujKiELzKY@dpg-d114ho2li9vc738covqg-a.oregon-postgres.render.com/requisitoriados'
@@ -12,6 +14,7 @@ db = SQLAlchemy(app)
 
 # Modelo de Usuario
 class Usuario(db.Model):
+    __tablename__ = 'usuario'  # Asegura el nombre de la tabla
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     apellidos = db.Column(db.String(100), nullable=False)
@@ -81,8 +84,10 @@ def login():
     else:
         return jsonify({"exito": False, "error": "Correo o contraseña incorrectos"}), 401
 
-# Punto de entrada
+# Crear tablas si no existen al iniciar la app
+@app.before_first_request
+def crear_tablas_si_no_existen():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
