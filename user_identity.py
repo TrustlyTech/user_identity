@@ -72,6 +72,7 @@ def login():
             "exito": True,
             "mensaje": "Inicio de sesión exitoso",
             "usuario": {
+                "id": usuario.id,
                 "nombre": usuario.nombre,
                 "apellidos": usuario.apellidos,
                 "correo": usuario.correo,
