@@ -86,6 +86,46 @@ def login():
         return jsonify({"exito": False, "error": "Correo o contraseña incorrectos"}), 401
 
 
+@app.route('/usuario/<int:id>', methods=['PUT'])
+def actualizar_usuario(id):
+    data = request.get_json()
+    usuario = Usuario.query.get(id)
+
+    if not usuario:
+        return jsonify({"exito": False, "error": "Usuario no encontrado"}), 404
+
+    # Validar si el nuevo correo ya existe en otro usuario
+    nuevo_correo = data.get('correo')
+    if nuevo_correo and nuevo_correo != usuario.correo:
+        if Usuario.query.filter_by(correo=nuevo_correo).first():
+            return jsonify({"exito": False, "error": "Correo ya en uso"}), 409
+        usuario.correo = nuevo_correo
+
+    # Validar si el nuevo celular ya existe en otro usuario
+    nuevo_celular = data.get('celular')
+    if nuevo_celular and nuevo_celular != usuario.celular:
+        if Usuario.query.filter_by(celular=nuevo_celular).first():
+            return jsonify({"exito": False, "error": "Celular ya en uso"}), 409
+        usuario.celular = nuevo_celular
+
+    # Actualizar otros campos si existen en el JSON
+    if 'nombre' in data:
+        usuario.nombre = data['nombre']
+    if 'apellidos' in data:
+        usuario.apellidos = data['apellidos']
+    if 'contrasena' in data:
+        usuario.contrasena = generate_password_hash(data['contrasena'])
+    if 'ciudad' in data:
+        usuario.ciudad = data['ciudad']
+    if 'pais' in data:
+        usuario.pais = data['pais']
+
+    db.session.commit()
+
+    return jsonify({"exito": True, "mensaje": "Datos del usuario actualizados correctamente"}), 200
+
+
+
 if __name__ != '__main__':
     # Producción (Gunicorn en Render, etc.)
     with app.app_context():
