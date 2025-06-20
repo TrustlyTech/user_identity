@@ -85,6 +85,26 @@ def login():
     else:
         return jsonify({"exito": False, "error": "Correo o contraseña incorrectos"}), 401
 
+@app.route('/usuario/<int:id>', methods=['GET'])
+def obtener_usuario(id):
+    usuario = Usuario.query.get(id)
+    
+    if not usuario:
+        return jsonify({"exito": False, "error": "Usuario no encontrado"}), 404
+
+    return jsonify({
+        "exito": True,
+        "usuario": {
+            "id": usuario.id,
+            "nombre": usuario.nombre,
+            "apellidos": usuario.apellidos,
+            "correo": usuario.correo,
+            "ciudad": usuario.ciudad,
+            "pais": usuario.pais,
+            "celular": usuario.celular,
+            "rol": usuario.rol
+        }
+    }), 200
 
 @app.route('/usuario/<int:id>', methods=['PUT'])
 def actualizar_usuario(id):
