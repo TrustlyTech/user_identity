@@ -14,7 +14,7 @@ db = SQLAlchemy(app)
 
 # Modelo de Usuario
 class Usuario(db.Model):
-    __tablename__ = 'usuario'  # Asegura el nombre de la tabla
+    __tablename__ = 'usuario'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     apellidos = db.Column(db.String(100), nullable=False)
@@ -114,21 +114,18 @@ def actualizar_usuario(id):
     if not usuario:
         return jsonify({"exito": False, "error": "Usuario no encontrado"}), 404
 
-    # Validar si el nuevo correo ya existe en otro usuario
     nuevo_correo = data.get('correo')
     if nuevo_correo and nuevo_correo != usuario.correo:
         if Usuario.query.filter_by(correo=nuevo_correo).first():
             return jsonify({"exito": False, "error": "Correo ya en uso"}), 409
         usuario.correo = nuevo_correo
 
-    # Validar si el nuevo celular ya existe en otro usuario
     nuevo_celular = data.get('celular')
     if nuevo_celular and nuevo_celular != usuario.celular:
         if Usuario.query.filter_by(celular=nuevo_celular).first():
             return jsonify({"exito": False, "error": "Celular ya en uso"}), 409
         usuario.celular = nuevo_celular
 
-    # Actualizar otros campos si existen en el JSON
     if 'nombre' in data:
         usuario.nombre = data['nombre']
     if 'apellidos' in data:
@@ -144,14 +141,52 @@ def actualizar_usuario(id):
 
     return jsonify({"exito": True, "mensaje": "Datos del usuario actualizados correctamente"}), 200
 
+# 🚨 NUEVAS RUTAS DE RECUPERACIÓN DE CONTRASEÑA
+
+@app.route('/verificar-usuario-recuperacion', methods=['POST'])
+def verificar_usuario_recuperacion():
+    data = request.get_json()
+    correo = data.get('correo')
+    celular = data.get('celular')
+
+    if not correo or not celular:
+        return jsonify({"exito": False, "error": "Correo y celular son requeridos"}), 400
+
+    usuario = Usuario.query.filter_by(correo=correo, celular=celular).first()
+
+    if not usuario:
+        return jsonify({"exito": False, "error": "No se encontró un usuario con esos datos"}), 404
+
+    return jsonify({
+        "exito": True,
+        "mensaje": "Usuario verificado. Puedes restablecer tu contraseña.",
+        "usuario_id": usuario.id
+    }), 200
+
+@app.route('/restablecer-contrasena-directo', methods=['POST'])
+def restablecer_contrasena_directo():
+    data = request.get_json()
+    usuario_id = data.get('usuario_id')
+    nueva_contrasena = data.get('nueva_contrasena')
+
+    if not usuario_id or not nueva_contrasena:
+        return jsonify({"exito": False, "error": "Datos incompletos"}), 400
+
+    usuario = Usuario.query.get(usuario_id)
+
+    if not usuario:
+        return jsonify({"exito": False, "error": "Usuario no encontrado"}), 404
+
+    usuario.contrasena = generate_password_hash(nueva_contrasena)
+    db.session.commit()
+
+    return jsonify({"exito": True, "mensaje": "Contraseña actualizada correctamente"}), 200
 
 
 if __name__ != '__main__':
-    # Producción (Gunicorn en Render, etc.)
     with app.app_context():
         db.create_all()
 else:
-    # Desarrollo local
     with app.app_context():
         db.create_all()
     app.run(debug=True)
